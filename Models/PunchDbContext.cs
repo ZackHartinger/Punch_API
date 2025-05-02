@@ -27,6 +27,7 @@ namespace Punch_API.Models
 
         public virtual DbSet<WorkTask> WorkTasks { get; set; }
 
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // Company configuration

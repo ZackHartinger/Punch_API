@@ -12,8 +12,8 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    [Migration("20250426213808_AddRemainingSeedData")]
-    partial class AddRemainingSeedData
+    [Migration("20250429035140_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,13 +38,6 @@ namespace Punch_API.Migrations
                     b.HasIndex("CompaniesCompanyId");
 
                     b.ToTable("AppUserCompany");
-
-                    b.HasData(
-                        new
-                        {
-                            AppUsersId = 1,
-                            CompaniesCompanyId = 1
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -159,13 +152,6 @@ namespace Punch_API.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = 1,
-                            RoleId = 1
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
@@ -263,22 +249,6 @@ namespace Punch_API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("EmployeeWorkDays");
-
-                    b.HasData(
-                        new
-                        {
-                            EmployeeWorkDayId = 1,
-                            CompanyId = 1,
-                            CreatedAt = new DateTime(2025, 4, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CustomerName = "Bourne",
-                            Date = new DateOnly(2025, 4, 18),
-                            EndTime = new TimeOnly(16, 30, 0),
-                            IsNew = false,
-                            LunchDuration = 30,
-                            LunchTime = new TimeOnly(12, 0, 0),
-                            StartTime = new TimeOnly(8, 0, 0),
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.Users.AppUser", b =>
@@ -378,32 +348,6 @@ namespace Punch_API.Migrations
                     b.HasIndex("WorkTaskId");
 
                     b.ToTable("WorkDayTasks");
-
-                    b.HasData(
-                        new
-                        {
-                            WorkDayTaskId = 1,
-                            EmployeeWorkDayId = 1,
-                            WorkTaskId = 1
-                        },
-                        new
-                        {
-                            WorkDayTaskId = 2,
-                            EmployeeWorkDayId = 1,
-                            WorkTaskId = 2
-                        },
-                        new
-                        {
-                            WorkDayTaskId = 3,
-                            EmployeeWorkDayId = 1,
-                            WorkTaskId = 3
-                        },
-                        new
-                        {
-                            WorkDayTaskId = 4,
-                            EmployeeWorkDayId = 1,
-                            WorkTaskId = 4
-                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.WorkTask", b =>

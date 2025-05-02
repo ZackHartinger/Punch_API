@@ -270,7 +270,7 @@ namespace Punch_API.Migrations
                             CustomerName = "Bourne",
                             Date = new DateOnly(2025, 4, 18),
                             EndTime = new TimeOnly(16, 30, 0),
-                            IsNew = false,
+                            IsNew = true,
                             LunchDuration = 30,
                             LunchTime = new TimeOnly(12, 0, 0),
                             StartTime = new TimeOnly(8, 0, 0),

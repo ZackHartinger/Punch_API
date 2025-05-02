@@ -12,8 +12,8 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    [Migration("20250426212434_Initial")]
-    partial class Initial
+    [Migration("20250429035707_AddRemainingSeedData")]
+    partial class AddRemainingSeedData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,6 +38,13 @@ namespace Punch_API.Migrations
                     b.HasIndex("CompaniesCompanyId");
 
                     b.ToTable("AppUserCompany");
+
+                    b.HasData(
+                        new
+                        {
+                            AppUsersId = 1,
+                            CompaniesCompanyId = 1
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -152,6 +159,13 @@ namespace Punch_API.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
@@ -188,6 +202,13 @@ namespace Punch_API.Migrations
                     b.HasKey("CompanyId");
 
                     b.ToTable("Companies");
+
+                    b.HasData(
+                        new
+                        {
+                            CompanyId = 1,
+                            CompanyName = "Outdoors By Design"
+                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.EmployeeWorkDay", b =>
@@ -242,6 +263,22 @@ namespace Punch_API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("EmployeeWorkDays");
+
+                    b.HasData(
+                        new
+                        {
+                            EmployeeWorkDayId = 1,
+                            CompanyId = 1,
+                            CreatedAt = new DateTime(2025, 4, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CustomerName = "Bourne",
+                            Date = new DateOnly(2025, 4, 18),
+                            EndTime = new TimeOnly(16, 30, 0),
+                            IsNew = true,
+                            LunchDuration = 30,
+                            LunchTime = new TimeOnly(12, 0, 0),
+                            StartTime = new TimeOnly(8, 0, 0),
+                            UserId = 1
+                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.Users.AppUser", b =>
@@ -341,6 +378,32 @@ namespace Punch_API.Migrations
                     b.HasIndex("WorkTaskId");
 
                     b.ToTable("WorkDayTasks");
+
+                    b.HasData(
+                        new
+                        {
+                            WorkDayTaskId = 1,
+                            EmployeeWorkDayId = 1,
+                            WorkTaskId = 1
+                        },
+                        new
+                        {
+                            WorkDayTaskId = 2,
+                            EmployeeWorkDayId = 1,
+                            WorkTaskId = 2
+                        },
+                        new
+                        {
+                            WorkDayTaskId = 3,
+                            EmployeeWorkDayId = 1,
+                            WorkTaskId = 3
+                        },
+                        new
+                        {
+                            WorkDayTaskId = 4,
+                            EmployeeWorkDayId = 1,
+                            WorkTaskId = 4
+                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.WorkTask", b =>
@@ -370,6 +433,88 @@ namespace Punch_API.Migrations
                     b.HasIndex("CompanyId");
 
                     b.ToTable("WorkTasks");
+
+                    b.HasData(
+                        new
+                        {
+                            WorkTaskId = 1,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Demoed landscape",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 2,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Installed bark",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 3,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Installed top soil",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 4,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Cleaned driveway/sidewalks",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 5,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Prepped subbase",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 6,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Set block/pavers/stone",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 7,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Cut block/pavers/stone",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 8,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Dug ditches",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 9,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Plumbed lines",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 10,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Adjusted heads",
+                            IsDeprecated = false
+                        });
                 });
 
             modelBuilder.Entity("AppUserCompany", b =>

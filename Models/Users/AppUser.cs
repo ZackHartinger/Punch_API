@@ -10,7 +10,11 @@ namespace Punch_API.Models.Users;
 
 public partial class AppUser : IdentityUser<int>
 {
-    public AppUser() => EmployeeWorkDays = new HashSet<EmployeeWorkDay>();
+    public AppUser()
+    {
+        EmployeeWorkDays = new HashSet<EmployeeWorkDay>();
+        Companies = new HashSet<Company>();
+    }
 
     public string FirstName { get; set; } = null!;
 

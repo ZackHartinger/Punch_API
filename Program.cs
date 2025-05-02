@@ -98,12 +98,18 @@ namespace Punch_API
                      }
                  }));
 
-            builder.Services.AddAuthorization();
-
             builder.Services.AddIdentity<AppUser, IdentityRole<int>>()
                 .AddUserStore<AppUserStore>()
                 .AddEntityFrameworkStores<PunchDbContext>()
                 .AddDefaultTokenProviders();
+
+            builder.Services
+                .AddAuthentication()
+                .AddCookie(options => 
+                    options.LoginPath = "/AppUsers/log-in");
+
+            builder.Services.AddAuthorization();
+
 
             var app = builder.Build();
 
@@ -118,6 +124,7 @@ namespace Punch_API
 
             app.UseCors();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseRouting();
