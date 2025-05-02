@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Punch_API.Models.Users;
 using Punch_API.Models;
 using Scalar.AspNetCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace Punch_API
 {
@@ -41,26 +42,36 @@ namespace Punch_API
                 });
             });
 
+            // Seed initial AppUser, per Microsoft's documentation I call both the UseSeeding and UseAsyncSeeding methods to ensure data is seeded
+            // both synchronously and asynchronously, the logic for both methods is the same so only the first UseSeeding has comments
             builder.Services.AddDbContext<PunchDbContext>(optionsBuilder =>
                 optionsBuilder
                 .UseSqlServer(connection)
                 .UseSeeding((context, _) =>
                 {
+                    // Check if a role named "admin" exists in the database
                     var testRole = context.Set<IdentityRole<int>>().FirstOrDefault(r => r.Name == "admin");
+                    // If not we add the "admin" role to the db
                     if (testRole == null)
                     {
                         context.Set<IdentityRole<int>>().Add(new IdentityRole<int> { Name = "admin" });
                         context.SaveChanges();
                     }
+                    // User to be added
                     var user = new AppUser
                     {
                         FirstName = "Zack",
                         LastName = "Hartinger",
-                        Email = "zackhrtngr@gmail.com"
+                        Email = "zackhrtngr@gmail.com",
+                        UserName = "zackhrtngr@gmail.com",
+                        SecurityStamp = Guid.NewGuid().ToString("D")
                     };
+                    // Check if user already exists
                     var testUser = context.Set<AppUser>().FirstOrDefault(u => u.Email == user.Email);
+                    // If not, add the user to the database
                     if (testUser == null)
                     {
+                        // Create a password hash for the user
                         var hasher = new PasswordHasher<AppUser>();
                         var hashed = hasher.HashPassword(user, "Hahaha64!");
                         user.PasswordHash = hashed;

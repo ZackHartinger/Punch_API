@@ -62,6 +62,7 @@ namespace Punch_API.Controllers
         public async Task<IActionResult> GetCurrentUser()
         {
             ClaimsPrincipal currentUser = this.User;
+            
             var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             return Ok("UserId: " + currentUserId);
@@ -81,24 +82,30 @@ namespace Punch_API.Controllers
                     FirstName = appUser.FirstName,
                     LastName = appUser.LastName,
                     Email = appUser.Email,
-                    UserName = appUser.FirstName + appUser.LastName,
+                    UserName = appUser.Email,
                     Companies = [defaultCompany]
                 };
-                var result = await _userManager.CreateAsync(user, appUser.Password);
-
-                if (result.Succeeded)
+                var testUser = _context.AppUsers.FirstOrDefault(u => u.Email == user.Email);
+                if (testUser == null)
                 {
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return CreatedAtAction("GetAppUser", new { id = user.Id }, appUser);
+                    var result = await _userManager.CreateAsync(user, appUser.Password);
+                    if (result.Succeeded)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return CreatedAtAction("GetAppUser", new { id = user.Id }, appUser);
+                    }
+                    else
+                    {
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError("", error.Description);
+                        }
+                    }
                 }
                 else
                 {
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError("", error.Description);
-                    }
-                }
-
+                    return BadRequest("A user with this email already exists.");
+                } 
             }
             return NoContent();
         }
