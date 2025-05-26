@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OBD_API.Models;
 using Punch_API.Models;
 
 namespace Punch_API.Controllers
@@ -24,7 +26,32 @@ namespace Punch_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasks()
         {
-            return await _context.WorkTasks.ToListAsync();
+            var workTasks = await _context.WorkTasks
+                .Include(wt => wt.Company)
+                .Where(wt => wt.IsDeprecated == false)
+                .GroupBy(wt => wt.Category)
+                .ToListAsync();
+
+            var workTaskDTOs = new List<WorkTaskDTO>();
+
+
+            for (int i = 0; i < workTasks.Count(); i++)
+            {
+                var workTaskGroup = workTasks[i];
+                foreach (WorkTask workTask in workTaskGroup)
+                {
+                    workTaskDTOs.Add(new WorkTaskDTO
+                    {
+                        WorkTaskId = workTask.WorkTaskId,
+                        Category = workTask.Category,
+                        Description = workTask.Description,
+                        IsDeprecated = workTask.IsDeprecated,
+                        CompanyId = workTask.CompanyId
+                    });
+                }
+            }
+
+            return Ok(workTaskDTOs);
         }
 
         // GET: api/WorkTasks/5
@@ -43,24 +70,49 @@ namespace Punch_API.Controllers
 
         [HttpGet]
         [Route("category/{category}")]
-        public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTaskByCategory(string category)
+        public async Task<ActionResult<IEnumerable<WorkTaskDTO>>> GetWorkTaskByCategory(string category)
         {
             var workTasks = await _context.WorkTasks
                 .Where(t => t.Category == category)
+                .Where(t => t.IsDeprecated == false)
                 .ToListAsync();
 
-            return workTasks;
+            var workTaskDTOs = new List<WorkTaskDTO>();
+
+            foreach (WorkTask workTask in workTasks)
+            {
+                workTaskDTOs.Add(new WorkTaskDTO
+                {
+                    WorkTaskId = workTask.WorkTaskId,
+                    Category = workTask.Category,
+                    Description = workTask.Description,
+                    CompanyId = workTask.CompanyId,
+                    IsDeprecated = workTask.IsDeprecated
+                });
+            }
+
+            return workTaskDTOs;
         }
 
         // PUT: api/WorkTasks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWorkTask(int id, WorkTask workTask)
+        public async Task<IActionResult> PutWorkTask(int id, WorkTaskDTO workTaskDTO)
         {
-            if (id != workTask.WorkTaskId)
+            if (id != workTaskDTO.WorkTaskId)
             {
                 return BadRequest();
             }
+            var company = await _context.Companies.FirstOrDefaultAsync(c => c.CompanyId == workTaskDTO.CompanyId);
+            var workTask = new WorkTask
+            {
+                WorkTaskId = workTaskDTO.WorkTaskId,
+                Category = workTaskDTO.Category,
+                Description = workTaskDTO.Description,
+                IsDeprecated = workTaskDTO.IsDeprecated,
+                CompanyId = workTaskDTO.CompanyId,
+                Company = company
+            };
 
             _context.Entry(workTask).State = EntityState.Modified;
 
@@ -86,12 +138,29 @@ namespace Punch_API.Controllers
         // POST: api/WorkTasks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<WorkTask>> PostWorkTask(WorkTask workTask)
+        public async Task<ActionResult<WorkTask>> PostWorkTask(WorkTaskDTO workTask)
         {
-            _context.WorkTasks.Add(workTask);
-            await _context.SaveChangesAsync();
+            if (ModelState.IsValid)
+            {
+                var company = await _context.Companies.FirstOrDefaultAsync(c => c.CompanyId == workTask.CompanyId);
+                var newWorkTask = new WorkTask
+                {
+                    WorkTaskId = workTask.WorkTaskId,
+                    Category = workTask.Category,
+                    Description = workTask.Description,
+                    IsDeprecated = workTask.IsDeprecated,
+                    CompanyId = workTask.CompanyId,
+                    Company = company
+                };
+                _context.WorkTasks.Add(newWorkTask);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetWorkTask", new { id = workTask.WorkTaskId }, workTask);
+                return CreatedAtAction("GetWorkTask", new { id = workTask.WorkTaskId }, newWorkTask);
+            }
+            else
+            {
+                return BadRequest("A work task object is required");
+            }
         }
 
         // DELETE: api/WorkTasks/5

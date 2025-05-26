@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Punch_API.Models;
 
@@ -11,9 +12,11 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    partial class PunchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250523135544_AddedInvitationTable")]
+    partial class AddedInvitationTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

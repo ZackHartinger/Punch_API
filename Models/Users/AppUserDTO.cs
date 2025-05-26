@@ -7,10 +7,12 @@
 
         public string LastName { get; set; } = null!;
 
-        public string FullName => $"{FirstName} {LastName}";
+        public string FullName { get; set; } = null!;
 
         public string Email { get; set; } = null!;
+        
+        public ICollection<Company> Companies { get; set; } = new List<Company>();
 
-        public string Password { get; set; } = null!;
+        public ICollection<string> Roles { get; set; } = new List<string>();
     }
 }

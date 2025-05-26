@@ -7,5 +7,9 @@
         public string Category { get; set; } = null!;
 
         public string Description { get; set; } = null!;
+
+        public int CompanyId { get; set; } 
+
+        public bool IsDeprecated { get; set; }
     }
 }

@@ -34,15 +34,16 @@ namespace Punch_API.Controllers
         }
 
 
-        [HttpGet]
-        [Route("top-5")]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> Get5MostRecentEmployeeWorkDays()
+        [HttpGet("top-5/{id}")]
+        [Authorize]
+        //[Route("top-5")]
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> Get5MostRecentEmployeeWorkDays(int id)
         {
             return await _context.EmployeeWorkDays
                 .Include(e => e.User)
                 .Include(e => e.WorkDayTasks)
                 .ThenInclude(e => e.WorkTask)
-                .Where(e => e.UserId == 1)
+                .Where(e => e.UserId == id)
                 .OrderByDescending(e => e.Date)
                 .Take(5)
                 .ToListAsync();
@@ -77,7 +78,9 @@ namespace Punch_API.Controllers
                 {
                     WorkTaskId = workDayTask.WorkTask.WorkTaskId,
                     Category = workDayTask.WorkTask.Category,
-                    Description = workDayTask.WorkTask.Description
+                    Description = workDayTask.WorkTask.Description,
+                    CompanyId = workDayTask.WorkTask.CompanyId,
+                    IsDeprecated = workDayTask.WorkTask.IsDeprecated
                 });
             }
 
@@ -370,7 +373,8 @@ namespace Punch_API.Controllers
 
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEmployeeWorkDay", new { id = employeeWorkDay.EmployeeWorkDayId }, employeeWorkDay);
+            //return CreatedAtAction("GetEmployeeWorkDay", new { id = employeeWorkDay.EmployeeWorkDayId }, employeeWorkDay);
+            return NoContent();
         }
 
         // DELETE: api/EmployeeWorkDays/5
