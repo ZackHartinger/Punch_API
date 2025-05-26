@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Punch_API.Models;
 using Punch_API.Models.Accounts;
 using Punch_API.Models.Users;
+using Punch_API.Options;
 
 namespace Punch_API.Controllers
 {
@@ -287,18 +288,18 @@ namespace Punch_API.Controllers
             var invitation = new Invitation { Email = email };
             try
             {   
-                var checkInvitation = _context.Invations.Where(i => i.Email == email);
-                if(checkInvitation == null)
+                var checkInvitation = _context.Invations.Any(i => i.Email == email);
+                if(!checkInvitation)
                 {
                     _context.Invations.Add(invitation);
                     _context.SaveChanges();
-                
-                    var client = new SmtpClient("smtp.gmail.com", 587);
-                    client.Credentials = new System.Net.NetworkCredential("punchtimemanagement@gmail.com", "hjgoyvxnaqytonyg");
+
+                    var client = new SmtpClient(GmailOptions.Host, GmailOptions.Port);
+                    client.Credentials = new System.Net.NetworkCredential(GmailOptions.Email, GmailOptions.Password);
                     client.EnableSsl = true;
 
                     MailMessage mailMessage = new MailMessage();
-                    mailMessage.From = new MailAddress("punchtimemanagement@gmail.com");
+                    mailMessage.From = new MailAddress(GmailOptions.Email);
                     mailMessage.To.Add(email);
                     mailMessage.Subject = "Test";
                     mailMessage.Body = "" +

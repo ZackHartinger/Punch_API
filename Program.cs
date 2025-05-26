@@ -46,6 +46,7 @@ namespace Punch_API
                 });
             });
 
+            builder.Configuration.GetSection("GmailOptions").Get<GmailOptions>();
 
             // Seed initial AppUser, per Microsoft's documentation I call both the UseSeeding and UseAsyncSeeding methods to ensure data is seeded
             // both synchronously and asynchronously, the logic for both methods is the same so only the first UseSeeding has comments
