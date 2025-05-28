@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Punch_API.Models;
 
@@ -11,9 +12,11 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    partial class PunchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250429035707_AddRemainingSeedData")]
+    partial class AddRemainingSeedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -276,23 +279,6 @@ namespace Punch_API.Migrations
                             StartTime = new TimeOnly(8, 0, 0),
                             UserId = 1
                         });
-                });
-
-            modelBuilder.Entity("Punch_API.Models.Invitation", b =>
-                {
-                    b.Property<int>("InvitationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvitationId"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("InvitationId");
-
-                    b.ToTable("Invations");
                 });
 
             modelBuilder.Entity("Punch_API.Models.Users.AppUser", b =>

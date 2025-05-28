@@ -1,4 +1,6 @@
-﻿namespace OBD_API.Models
+﻿using Punch_API.Models;
+
+namespace OBD_API.Models
 {
     public class EmployeeWorkDayDTO
     {

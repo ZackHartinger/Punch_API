@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Punch_API.Models.Users;
 using Punch_API.Models;
 using Scalar.AspNetCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using System.Configuration;
+using Punch_API.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Punch_API
 {
@@ -37,32 +41,45 @@ namespace Punch_API
                 {
                     builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
             });
 
+            builder.Configuration.GetSection("GmailOptions").Get<GmailOptions>();
+
+            // Seed initial AppUser, per Microsoft's documentation I call both the UseSeeding and UseAsyncSeeding methods to ensure data is seeded
+            // both synchronously and asynchronously, the logic for both methods is the same so only the first UseSeeding has comments
             builder.Services.AddDbContext<PunchDbContext>(optionsBuilder =>
                 optionsBuilder
                 .UseSqlServer(connection)
                 .UseSeeding((context, _) =>
                 {
+                    // Check if a role named "admin" exists in the database
                     var testRole = context.Set<IdentityRole<int>>().FirstOrDefault(r => r.Name == "admin");
+                    // If not we add the "admin" role to the db
                     if (testRole == null)
                     {
                         context.Set<IdentityRole<int>>().Add(new IdentityRole<int> { Name = "admin" });
                         context.SaveChanges();
                     }
+                    // User to be added
                     var user = new AppUser
                     {
-                        FirstName = "Zack",
-                        LastName = "Hartinger",
-                        Email = "zackhrtngr@gmail.com"
+                        FirstName = builder.Configuration["AdminUserOptions:FirstName"],
+                        LastName = builder.Configuration["AdminUserOptions:LastName"],
+                        Email = builder.Configuration["AdminUserOptions:Email"],
+                        UserName = builder.Configuration["AdminUserOptions:UserName"],
+                        SecurityStamp = Guid.NewGuid().ToString("D")
                     };
+                    // Check if user already exists
                     var testUser = context.Set<AppUser>().FirstOrDefault(u => u.Email == user.Email);
+                    // If not, add the user to the database
                     if (testUser == null)
                     {
+                        // Create a password hash for the user
                         var hasher = new PasswordHasher<AppUser>();
-                        var hashed = hasher.HashPassword(user, "Hahaha64!");
+                        var hashed = hasher.HashPassword(user, builder.Configuration["AdminUserOptions:Password"]);
                         user.PasswordHash = hashed;
 
                         context.Set<AppUser>().Add(user);
@@ -82,15 +99,15 @@ namespace Punch_API
                      var user = new AppUser
                      {
                          Id = 1,
-                         FirstName = "Zack",
-                         LastName = "Hartinger",
-                         Email = "zackhrtngr@gmail.com"
+                         FirstName = builder.Configuration["AdminUserOptions:FirstName"],
+                         LastName = builder.Configuration["AdminUserOptions:LastName"],
+                         Email = builder.Configuration["AdminUserOptions:Email"]
                      };
                      var testUser = await context.Set<AppUser>().FirstOrDefaultAsync(u => u.Email == user.Email);
                      if (testUser == null)
                      {
                          var hasher = new PasswordHasher<AppUser>();
-                         var hashed = hasher.HashPassword(user, "Hahaha64!");
+                         var hashed = hasher.HashPassword(user, builder.Configuration["AdminUserOptions:Password"]);
                          user.PasswordHash = hashed;
 
                          context.Set<AppUser>().Add(user);
@@ -98,12 +115,18 @@ namespace Punch_API
                      }
                  }));
 
-            builder.Services.AddAuthorization();
-
             builder.Services.AddIdentity<AppUser, IdentityRole<int>>()
                 .AddUserStore<AppUserStore>()
                 .AddEntityFrameworkStores<PunchDbContext>()
                 .AddDefaultTokenProviders();
+
+            builder.Services
+                .AddAuthentication()
+                .AddCookie(options => 
+                    options.LoginPath = "/AppUsers/log-in");
+
+            builder.Services.AddAuthorization();
+
 
             var app = builder.Build();
 
@@ -118,9 +141,10 @@ namespace Punch_API
 
             app.UseCors();
 
-            app.UseAuthorization();
-
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
 

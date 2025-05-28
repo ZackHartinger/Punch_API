@@ -10,6 +10,7 @@ namespace Punch_API.Models
 
         public string CompanyName { get; set; } = string.Empty;
 
+        // Navigation properties
         [JsonIgnore]
         public ICollection<AppUser> AppUsers { get; set; }
 

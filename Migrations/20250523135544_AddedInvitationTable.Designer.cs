@@ -12,8 +12,8 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    [Migration("20250426213808_AddRemainingSeedData")]
-    partial class AddRemainingSeedData
+    [Migration("20250523135544_AddedInvitationTable")]
+    partial class AddedInvitationTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -273,12 +273,29 @@ namespace Punch_API.Migrations
                             CustomerName = "Bourne",
                             Date = new DateOnly(2025, 4, 18),
                             EndTime = new TimeOnly(16, 30, 0),
-                            IsNew = false,
+                            IsNew = true,
                             LunchDuration = 30,
                             LunchTime = new TimeOnly(12, 0, 0),
                             StartTime = new TimeOnly(8, 0, 0),
                             UserId = 1
                         });
+                });
+
+            modelBuilder.Entity("Punch_API.Models.Invitation", b =>
+                {
+                    b.Property<int>("InvitationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvitationId"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("InvitationId");
+
+                    b.ToTable("Invations");
                 });
 
             modelBuilder.Entity("Punch_API.Models.Users.AppUser", b =>

@@ -21,11 +21,14 @@ namespace Punch_API.Models
 
         public virtual DbSet<AppUser> AppUsers { get; set; }
 
+        public virtual DbSet<Invitation> Invations { get; set; }
+
         public virtual DbSet<EmployeeWorkDay> EmployeeWorkDays { get; set; }
 
         public virtual DbSet<WorkDayTask> WorkDayTasks { get; set; }
 
         public virtual DbSet<WorkTask> WorkTasks { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

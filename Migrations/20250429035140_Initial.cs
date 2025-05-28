@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Punch_API.Migrations
 {
     /// <inheritdoc />
@@ -278,6 +280,28 @@ namespace Punch_API.Migrations
                         column: x => x.WorkTaskId,
                         principalTable: "WorkTasks",
                         principalColumn: "WorkTaskId");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Companies",
+                columns: new[] { "CompanyId", "CompanyName" },
+                values: new object[] { 1, "Outdoors By Design" });
+
+            migrationBuilder.InsertData(
+                table: "WorkTasks",
+                columns: new[] { "WorkTaskId", "Category", "CompanyId", "Description", "IsDeprecated" },
+                values: new object[,]
+                {
+                    { 1, "General Labor", 1, "Demoed landscape", false },
+                    { 2, "General Labor", 1, "Installed bark", false },
+                    { 3, "General Labor", 1, "Installed top soil", false },
+                    { 4, "General Labor", 1, "Cleaned driveway/sidewalks", false },
+                    { 5, "Hardscape", 1, "Prepped subbase", false },
+                    { 6, "Hardscape", 1, "Set block/pavers/stone", false },
+                    { 7, "Hardscape", 1, "Cut block/pavers/stone", false },
+                    { 8, "Irrigation", 1, "Dug ditches", false },
+                    { 9, "Irrigation", 1, "Plumbed lines", false },
+                    { 10, "Irrigation", 1, "Adjusted heads", false }
                 });
 
             migrationBuilder.CreateIndex(

@@ -12,7 +12,7 @@ using Punch_API.Models;
 namespace Punch_API.Migrations
 {
     [DbContext(typeof(PunchDbContext))]
-    [Migration("20250426212434_Initial")]
+    [Migration("20250429035140_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -188,6 +188,13 @@ namespace Punch_API.Migrations
                     b.HasKey("CompanyId");
 
                     b.ToTable("Companies");
+
+                    b.HasData(
+                        new
+                        {
+                            CompanyId = 1,
+                            CompanyName = "Outdoors By Design"
+                        });
                 });
 
             modelBuilder.Entity("Punch_API.Models.EmployeeWorkDay", b =>
@@ -370,6 +377,88 @@ namespace Punch_API.Migrations
                     b.HasIndex("CompanyId");
 
                     b.ToTable("WorkTasks");
+
+                    b.HasData(
+                        new
+                        {
+                            WorkTaskId = 1,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Demoed landscape",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 2,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Installed bark",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 3,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Installed top soil",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 4,
+                            Category = "General Labor",
+                            CompanyId = 1,
+                            Description = "Cleaned driveway/sidewalks",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 5,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Prepped subbase",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 6,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Set block/pavers/stone",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 7,
+                            Category = "Hardscape",
+                            CompanyId = 1,
+                            Description = "Cut block/pavers/stone",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 8,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Dug ditches",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 9,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Plumbed lines",
+                            IsDeprecated = false
+                        },
+                        new
+                        {
+                            WorkTaskId = 10,
+                            Category = "Irrigation",
+                            CompanyId = 1,
+                            Description = "Adjusted heads",
+                            IsDeprecated = false
+                        });
                 });
 
             modelBuilder.Entity("AppUserCompany", b =>
