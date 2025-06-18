@@ -85,6 +85,40 @@ namespace Punch_API
                         context.Set<AppUser>().Add(user);
                         context.SaveChanges();
                     }
+
+                    // Seed data for demo login for live project!
+                    var company = context.Set<Company>().FirstOrDefault(c => c.CompanyName == "Demo");
+                    if (company == null)
+                    {
+                        context.Set<Company>().Add(new Company { CompanyName = "Demo" });
+                        context.SaveChanges();
+                    }
+
+                    var demoRole = context.Set<IdentityRole<int>>().FirstOrDefault(r => r.Name == "demo");
+                    if (demoRole == null)
+                    {
+                        context.Set<IdentityRole<int>>().Add(new IdentityRole<int> { Name = "demo" });
+                        context.SaveChanges();
+                    }
+
+                    var demoUser = new AppUser
+                    {
+                        FirstName = builder.Configuration["DemoUserOptions:FirstName"],
+                        LastName = builder.Configuration["DemoUserOptions:LastName"],
+                        Email = builder.Configuration["DemoUserOptions:Email"],
+                        UserName = builder.Configuration["DemoUserOptions:UserName"],
+                        SecurityStamp = Guid.NewGuid().ToString("D")
+                    };
+                    var testDemoUser = context.Set<AppUser>().FirstOrDefault(u => u.Email == demoUser.Email);
+                    if (testDemoUser == null)
+                    {
+                        var hasher = new PasswordHasher<AppUser>();
+                        var hashed = hasher.HashPassword(user, builder.Configuration["DemoUserOptions:Password"]);
+                        user.PasswordHash = hashed;
+
+                        context.Set<AppUser>().Add(demoUser);
+                        context.SaveChanges();
+                    }
                 }
 
                 )
@@ -98,7 +132,6 @@ namespace Punch_API
                      }
                      var user = new AppUser
                      {
-                         Id = 1,
                          FirstName = builder.Configuration["AdminUserOptions:FirstName"],
                          LastName = builder.Configuration["AdminUserOptions:LastName"],
                          Email = builder.Configuration["AdminUserOptions:Email"]

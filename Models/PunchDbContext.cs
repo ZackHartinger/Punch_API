@@ -63,13 +63,13 @@ namespace Punch_API.Models
                         UserId = 1
                     }
                 );
-            builder.Entity<AppUser>()
-                .HasMany(a => a.Companies)
-                .WithMany(c => c.AppUsers)
-                .UsingEntity(ac => ac
-                    .HasData(
-                        new { AppUsersId = 1, CompaniesCompanyId = 1 }
-                    ));
+            //builder.Entity<AppUser>()
+            //    .HasMany(a => a.Companies)
+            //    .WithMany(c => c.AppUsers)
+            //    .UsingEntity(ac => ac
+            //        .HasData(
+            //            new { AppUsersId = 1, CompaniesCompanyId = 1 }
+            //        ));
 
             // EmployeeWorkDay configuration
             builder.Entity<EmployeeWorkDay>()

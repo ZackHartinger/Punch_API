@@ -35,13 +35,6 @@ namespace Punch_API.Migrations
                     b.HasIndex("CompaniesCompanyId");
 
                     b.ToTable("AppUserCompany");
-
-                    b.HasData(
-                        new
-                        {
-                            AppUsersId = 1,
-                            CompaniesCompanyId = 1
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>

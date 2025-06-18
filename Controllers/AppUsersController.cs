@@ -180,6 +180,50 @@ namespace Punch_API.Controllers
         }
 
         [HttpPost]
+        [Route("add-user")]
+        public async Task<ActionResult<AppUser>> AddUser([FromBody] AppUsersSignUpDTO appUser)
+        {
+            if (ModelState.IsValid)
+            {
+                var defaultCompany = _context.Companies.FirstOrDefault(c => c.CompanyId == 1);
+                var user = new AppUser
+                {
+                    FirstName = appUser.FirstName,
+                    LastName = appUser.LastName,
+                    Email = appUser.Email,
+                    UserName = appUser.Email,
+                    Companies = [defaultCompany]
+                };
+                var testUser = _context.AppUsers.FirstOrDefault(u => u.Email == user.Email);
+                if (testUser == null)
+                {
+                    var result = await _userManager.CreateAsync(user, appUser.Password);
+                    if (result.Succeeded)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return CreatedAtAction("GetAppUser", new { id = user.Id }, appUser);
+                    }
+                    else
+                    {
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError("", error.Description);
+                        }
+                    }
+                }
+                else
+                {
+                    return BadRequest("A user with this email already exists.");
+                }
+            }
+            else
+            {
+                return BadRequest();
+            }
+            return NoContent();
+        }
+
+        [HttpPost]
         [Route("log-in")]
         public async Task<IActionResult> LogIn([FromBody] AppUserLoginDTO appUser)
         {
