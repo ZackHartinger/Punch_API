@@ -8,6 +8,8 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using System.Configuration;
 using Punch_API.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Azure;
 
 namespace Punch_API
 {
@@ -31,7 +33,7 @@ namespace Punch_API
             }
             else
             {
-                connection = Environment.GetEnvironmentVariable("PunchDbContext");
+                connection = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
             }
 
 
@@ -39,10 +41,11 @@ namespace Punch_API
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                    builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "punch-time-management.com")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowCredentials();
+                    .AllowCredentials()
+                    .WithExposedHeaders("Set-Cookie");
                 });
             });
 
@@ -153,13 +156,33 @@ namespace Punch_API
                 .AddEntityFrameworkStores<PunchDbContext>()
                 .AddDefaultTokenProviders();
 
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/AppUsers/log-in";
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.IsEssential = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.Extensions.Add("Partitioned");
+                options.Cookie.Domain = "punch-time-management.com";
+            });
+
             builder.Services
                 .AddAuthentication()
-                .AddCookie(options => 
-                    options.LoginPath = "/AppUsers/log-in");
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/AppUsers/log-in";
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.IsEssential = true;
+                    options.Cookie.Extensions.Add("Partitioned");
+                    options.Cookie.Domain = "punch-time-management.com";
+                });
 
             builder.Services.AddAuthorization();
 
+            
 
             var app = builder.Build();
 
@@ -170,7 +193,10 @@ namespace Punch_API
                 app.MapScalarApiReference();
             }
 
+            
             app.UseHttpsRedirection();
+
+            app.UseCookiePolicy();
 
             app.UseCors();
 

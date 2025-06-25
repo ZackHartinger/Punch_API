@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.EntityFrameworkCore;
 using OBD_API.Models;
 using Punch_API.Models;
@@ -22,6 +23,14 @@ namespace Punch_API.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        [Route("test")]
+        public string Test()
+        {
+            string test = "test";
+            return test;
+        }
+
         // GET: api/WorkTasks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasks()
@@ -29,6 +38,38 @@ namespace Punch_API.Controllers
             var workTasks = await _context.WorkTasks
                 .Include(wt => wt.Company)
                 .Where(wt => wt.IsDeprecated == false)
+                .GroupBy(wt => wt.Category)
+                .ToListAsync();
+
+            var workTaskDTOs = new List<WorkTaskDTO>();
+
+
+            for (int i = 0; i < workTasks.Count(); i++)
+            {
+                var workTaskGroup = workTasks[i];
+                foreach (WorkTask workTask in workTaskGroup)
+                {
+                    workTaskDTOs.Add(new WorkTaskDTO
+                    {
+                        WorkTaskId = workTask.WorkTaskId,
+                        Category = workTask.Category,
+                        Description = workTask.Description,
+                        IsDeprecated = workTask.IsDeprecated,
+                        CompanyId = workTask.CompanyId
+                    });
+                }
+            }
+
+            return Ok(workTaskDTOs);
+        }
+
+        [HttpGet]
+        [Route("by-company/{companyId}")]
+        public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasksByCompany(int companyId)
+        {
+            var workTasks = await _context.WorkTasks
+                .Include(wt => wt.Company)
+                .Where(wt => wt.IsDeprecated == false && wt.CompanyId == companyId)
                 .GroupBy(wt => wt.Category)
                 .ToListAsync();
 

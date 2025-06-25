@@ -33,6 +33,17 @@ namespace Punch_API.Controllers
                 .ToListAsync();
         }
 
+        [HttpGet]
+        [Route("by-company/{companyId}")]
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> GetEmployeeWorkDaysByCompany(int companyId)
+        {
+            return await _context.EmployeeWorkDays
+                .Include(e => e.User)
+                .Include(e => e.WorkDayTasks)
+                .ThenInclude(e => e.WorkTask)
+                .Where(e => e.CompanyId == companyId)
+                .ToListAsync();
+        }
 
         [HttpGet("top-5/{id}")]
         [Authorize]
