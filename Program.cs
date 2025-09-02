@@ -1,15 +1,16 @@
 
+using Azure;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Punch_API.Models.Users;
-using Punch_API.Models;
-using Scalar.AspNetCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using System.Configuration;
-using Punch_API.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Azure;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using Punch_API.Models;
+using Punch_API.Models.Users;
+using Punch_API.Options;
+using Scalar.AspNetCore;
+using System.Configuration;
 
 namespace Punch_API
 {
@@ -36,12 +37,16 @@ namespace Punch_API
                 connection = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
             }
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
 
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "punch-time-management.com")
+                    builder.WithOrigins("https://api.punch-time-management.com","https://punch-time-management.com")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()
@@ -164,7 +169,7 @@ namespace Punch_API
                 options.Cookie.IsEssential = true;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.Extensions.Add("Partitioned");
-                options.Cookie.Domain = "punch-time-management.com";
+                options.Cookie.Domain = ".punch-time-management.com";
             });
 
             builder.Services
@@ -177,12 +182,12 @@ namespace Punch_API
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                     options.Cookie.IsEssential = true;
                     options.Cookie.Extensions.Add("Partitioned");
-                    options.Cookie.Domain = "punch-time-management.com";
+                    options.Cookie.Domain = ".punch-time-management.com";
                 });
 
             builder.Services.AddAuthorization();
 
-            
+          
 
             var app = builder.Build();
 
@@ -190,17 +195,20 @@ namespace Punch_API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
-                app.MapScalarApiReference();
+                app.MapScalarApiReference(options =>
+                {
+                    options.Servers = [];
+                });
             }
 
             
+            app.UseForwardedHeaders();
             app.UseHttpsRedirection();
 
             app.UseCookiePolicy();
 
-            app.UseCors();
-
             app.UseRouting();
+            app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();

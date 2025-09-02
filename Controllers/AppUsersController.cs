@@ -17,6 +17,7 @@ using Punch_API.Options;
 
 namespace Punch_API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AppUsersController : ControllerBase
@@ -36,7 +37,6 @@ namespace Punch_API.Controllers
 
         // GET: api/AppUsers
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetAppUsers()
         {
             var appUsers =  await _context.AppUsers
@@ -49,16 +49,9 @@ namespace Punch_API.Controllers
             foreach(AppUser appUser in appUsers)
             {
                 var roles = await _userManager.GetRolesAsync(appUser);
-                appUserDTOs.Add(new AppUserDTO
-                {
-                    Id = appUser.Id,
-                    FirstName = appUser.FirstName,
-                    LastName = appUser.LastName,
-                    FullName = appUser.FullName,
-                    Email = appUser.Email,
-                    Companies = appUser.Companies,
-                    Roles = roles
-                });
+                var appUserDTO = appUser.ToDTO();
+                appUserDTO.Roles = roles;
+                appUserDTOs.Add(appUserDTO);
             }
 
             if(appUsers == null || appUserDTOs == null)
@@ -268,6 +261,7 @@ namespace Punch_API.Controllers
             return Ok("Log out successfull!");
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("add-to-role/{id}/{roleName}")]
         public async Task<IActionResult> AddUserToRole(int id, string roleName)
@@ -300,6 +294,7 @@ namespace Punch_API.Controllers
             }
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("remove-from-role/{id}/{roleName}")]
         public async Task<IActionResult> RemoveFromRole(int id, string roleName)
@@ -325,6 +320,7 @@ namespace Punch_API.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("invite-new-user/{email}")]
         public async Task<IActionResult> InviteNewUser(string email)
@@ -368,6 +364,7 @@ namespace Punch_API.Controllers
         }
 
         // DELETE: api/AppUsers/5
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppUser(int id)
         {

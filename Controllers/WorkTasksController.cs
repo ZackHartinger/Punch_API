@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -12,6 +13,7 @@ using Punch_API.Models;
 
 namespace Punch_API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class WorkTasksController : ControllerBase
@@ -64,8 +66,8 @@ namespace Punch_API.Controllers
         }
 
         [HttpGet]
-        [Route("by-company/{companyId}")]
-        public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasksByCompany(int companyId)
+        [Route("group-by-company/{companyId}")]
+        public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasksGroupedByCompany(int companyId)
         {
             var workTasks = await _context.WorkTasks
                 .Include(wt => wt.Company)
@@ -95,6 +97,32 @@ namespace Punch_API.Controllers
             return Ok(workTaskDTOs);
         }
 
+        [HttpGet]
+        [Route("by-company/{companyId}")]
+        public async Task<ActionResult<IEnumerable<WorkTask>>> GetWorkTasksByCompany(int companyId)
+        {
+            var workTasks = await _context.WorkTasks
+                .Include(wt => wt.Company)
+                .Where(wt => wt.IsDeprecated == false && wt.CompanyId == companyId)
+                .ToListAsync();
+
+            var workTaskDTOs = new List<WorkTaskDTO>();
+
+            foreach(var workTask in workTasks) 
+            {
+                workTaskDTOs.Add(new WorkTaskDTO
+                {
+                    WorkTaskId = workTask.WorkTaskId,
+                    Category = workTask.Category,
+                    Description = workTask.Description,
+                    IsDeprecated = workTask.IsDeprecated,
+                    CompanyId = workTask.CompanyId
+                });   
+            }
+
+            return Ok(workTaskDTOs);
+        }
+
         // GET: api/WorkTasks/5
         [HttpGet("{id}")]
         public async Task<ActionResult<WorkTask>> GetWorkTask(int id)
@@ -110,11 +138,12 @@ namespace Punch_API.Controllers
         }
 
         [HttpGet]
-        [Route("category/{category}")]
-        public async Task<ActionResult<IEnumerable<WorkTaskDTO>>> GetWorkTaskByCategory(string category)
+        [Route("category/{category}/{companyId}")]
+        public async Task<ActionResult<IEnumerable<WorkTaskDTO>>> GetWorkTaskByCategory(string category, int companyId)
         {
             var workTasks = await _context.WorkTasks
                 .Where(t => t.Category == category)
+                .Where(t => t.CompanyId == companyId)
                 .Where(t => t.IsDeprecated == false)
                 .ToListAsync();
 
@@ -137,6 +166,7 @@ namespace Punch_API.Controllers
 
         // PUT: api/WorkTasks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Roles = "admin, demo")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutWorkTask(int id, WorkTaskDTO workTaskDTO)
         {
@@ -178,6 +208,7 @@ namespace Punch_API.Controllers
 
         // POST: api/WorkTasks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Roles = "admin, demo")]
         [HttpPost]
         public async Task<ActionResult<WorkTask>> PostWorkTask(WorkTaskDTO workTask)
         {
@@ -205,6 +236,7 @@ namespace Punch_API.Controllers
         }
 
         // DELETE: api/WorkTasks/5
+        [Authorize(Roles = "admin, demo")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkTask(int id)
         {

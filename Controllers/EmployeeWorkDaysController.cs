@@ -4,53 +4,78 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OBD_API.Models;
 using Punch_API.Models;
+using Punch_API.Models.Users;
 
 namespace Punch_API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class EmployeeWorkDaysController : ControllerBase
     {
         private readonly PunchDbContext _context;
 
-        public EmployeeWorkDaysController(PunchDbContext context)
+        private readonly UserManager<AppUser> _userManager;
+
+        public EmployeeWorkDaysController(UserManager<AppUser> userManager,PunchDbContext context)
         {
+            _userManager = userManager;
             _context = context;
         }
 
         // GET: api/EmployeeWorkDays
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> GetEmployeeWorkDays()
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDayDTO>>> GetEmployeeWorkDays()
         {
-            return await _context.EmployeeWorkDays
+            var employeeWorkDays =  await _context.EmployeeWorkDays
                 .Include(e => e.User)
+                .ThenInclude(u => u.Companies)
                 .Include(e => e.WorkDayTasks)
                 .ThenInclude(e => e.WorkTask)
                 .ToListAsync();
+
+            var employeeWorkDayDTOs = new List<EmployeeWorkDayDTO>();
+
+            foreach(EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+            {
+                employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+            }
+
+            return employeeWorkDayDTOs;
         }
 
         [HttpGet]
         [Route("by-company/{companyId}")]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> GetEmployeeWorkDaysByCompany(int companyId)
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDayDTO>>> GetEmployeeWorkDaysByCompany(int companyId)
         {
-            return await _context.EmployeeWorkDays
+            var employeeWorkDays =  await _context.EmployeeWorkDays
                 .Include(e => e.User)
                 .Include(e => e.WorkDayTasks)
                 .ThenInclude(e => e.WorkTask)
                 .Where(e => e.CompanyId == companyId)
+                .OrderBy(e => e.Date)
                 .ToListAsync();
+
+            var employeeWorkDayDTOs = new List<EmployeeWorkDayDTO>();
+
+            foreach(EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+            {
+                employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+            }
+
+            return employeeWorkDayDTOs;
         }
 
         [HttpGet("top-5/{id}")]
-        [Authorize]
         //[Route("top-5")]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> Get5MostRecentEmployeeWorkDays(int id)
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDayDTO>>> Get5MostRecentEmployeeWorkDays(int id)
         {
-            return await _context.EmployeeWorkDays
+            var employeeWorkDays =  await _context.EmployeeWorkDays
                 .Include(e => e.User)
                 .Include(e => e.WorkDayTasks)
                 .ThenInclude(e => e.WorkTask)
@@ -58,6 +83,15 @@ namespace Punch_API.Controllers
                 .OrderByDescending(e => e.Date)
                 .Take(5)
                 .ToListAsync();
+
+            var employeeWorkDayDTOs = new List<EmployeeWorkDayDTO>();
+
+            foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+            {
+                employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+            }
+
+            return employeeWorkDayDTOs;
         }
 
         [HttpGet("{id}")]
@@ -69,32 +103,8 @@ namespace Punch_API.Controllers
                 .ThenInclude(e => e.WorkTask)
                 .FirstAsync(e => e.EmployeeWorkDayId == id);
 
-            var employeeWorkDayDTO = new EmployeeWorkDayDTO
-            {
-                EmployeeWorkDayId = employeeWorkDay.EmployeeWorkDayId,
-                CustomerName = employeeWorkDay.CustomerName,
-                Date = employeeWorkDay.Date,
-                StartTime = employeeWorkDay.StartTime,
-                EndTime = employeeWorkDay.EndTime,
-                LunchTime = employeeWorkDay.LunchTime,
-                LunchDuration = employeeWorkDay.LunchDuration,
-                Mileage = employeeWorkDay.Mileage,
-                TruckName = employeeWorkDay.TruckName,
-                UserId = employeeWorkDay.UserId
-            };
-
-            foreach (WorkDayTask workDayTask in employeeWorkDay.WorkDayTasks)
-            {
-                employeeWorkDayDTO.WorkDayTasks.Add(new WorkTaskDTO
-                {
-                    WorkTaskId = workDayTask.WorkTask.WorkTaskId,
-                    Category = workDayTask.WorkTask.Category,
-                    Description = workDayTask.WorkTask.Description,
-                    CompanyId = workDayTask.WorkTask.CompanyId,
-                    IsDeprecated = workDayTask.WorkTask.IsDeprecated
-                });
-            }
-
+            var employeeWorkDayDTO = employeeWorkDay.ToDTO();
+            
             if (employeeWorkDay == null)
             {
                 return NotFound();
@@ -107,7 +117,7 @@ namespace Punch_API.Controllers
         // Gets list of employee workdays for a specific user
         [HttpGet]
         [Route("by-employee/{id}")]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> GetEmployeeWorkDaysByEmployeeId(int id)
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDayDTO>>> GetEmployeeWorkDaysByEmployeeId(int id)
         {
             if (id == null)
             {
@@ -125,15 +135,22 @@ namespace Punch_API.Controllers
                 return NotFound();
             }
 
-            return employeeWorkDays;
+            var employeeWorkDayDTOs = new List<EmployeeWorkDayDTO>();
+            foreach(EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+            {
+                employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+            }
+
+            return employeeWorkDayDTOs;
         }
 
         [HttpGet]
         [Route("filter/{id?}/{date?}/{toDate?}")]
         [Route("filter/{id?}/{date?}")]
         [Route("filter/{id?}")]
-        public async Task<ActionResult<IEnumerable<EmployeeWorkDay>>> FilterEmployeeWorkDays(int? id = null, string? date = null, string? toDate = null)
+        public async Task<ActionResult<IEnumerable<EmployeeWorkDayDTO>>> FilterEmployeeWorkDays(int? id = null, string? date = null, string? toDate = null)
         {
+            var employeeWorkDayDTOs = new List<EmployeeWorkDayDTO>();
             // ----------- NEEDS ATTENTION -----------------
             // the parsing of dates breaks DRY practices and should be extracted into a utility/helper method so that any future changes will only need to be committed in one place
 
@@ -168,8 +185,11 @@ namespace Punch_API.Controllers
                 {
                     return NotFound();
                 }
-
-                return employeeWorkDays;
+                foreach(EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
             // if filtering by date range only
             else if (date != null && toDate != null)
@@ -200,8 +220,11 @@ namespace Punch_API.Controllers
                 {
                     return NotFound();
                 }
-
-                return employeeWorkDays;
+                foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
             // if filtering by id and date
             else if (id != 0 && date != null)
@@ -227,8 +250,11 @@ namespace Punch_API.Controllers
                 {
                     return NotFound();
                 }
-
-                return employeeWorkDays;
+                foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
             // if filtering by id only
             else if (id != 0 && date == null && toDate == null)
@@ -245,8 +271,11 @@ namespace Punch_API.Controllers
                 {
                     return NotFound();
                 }
-
-                return employeeWorkDays;
+                foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
             // if filtering by date only
             else if (date != null && id == 0 && toDate == null)
@@ -271,18 +300,27 @@ namespace Punch_API.Controllers
                 {
                     return NotFound();
                 }
-
-                return employeeWorkDays;
+                foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
             // no filters selected return all
             else
             {
-                return await _context.EmployeeWorkDays
+                var employeeWorkDays =  await _context.EmployeeWorkDays
                     .Include(e => e.User)
                     .Include(e => e.WorkDayTasks)
                     .ThenInclude(e => e.WorkTask)
                     .OrderBy(e => e.Date)
                     .ToListAsync();
+
+                foreach (EmployeeWorkDay employeeWorkDay in employeeWorkDays)
+                {
+                    employeeWorkDayDTOs.Add(employeeWorkDay.ToDTO());
+                }
+                return employeeWorkDayDTOs;
             }
         }
 
@@ -356,7 +394,9 @@ namespace Punch_API.Controllers
         [HttpPost]
         public async Task<ActionResult<EmployeeWorkDay>> PostEmployeeWorkDay([FromBody] EmployeeWorkDayDTO employeeWorkDay)
         {
-            var user = await _context.AppUsers.FirstAsync(e => e.Id == employeeWorkDay.UserId);
+            var user = await _context.AppUsers
+                .Include(au => au.Companies)
+                .FirstAsync(e => e.Id == employeeWorkDay.UserId);
 
             var newWorkDay = new EmployeeWorkDay
             {
@@ -370,7 +410,7 @@ namespace Punch_API.Controllers
                 TruckName = employeeWorkDay.TruckName,
                 UserId = employeeWorkDay.UserId,
                 User = user,
-                CompanyId = 1
+                CompanyId = employeeWorkDay.CompanyId
             };
 
             _context.EmployeeWorkDays.Add(newWorkDay);

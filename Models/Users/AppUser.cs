@@ -32,3 +32,20 @@ public partial class AppUser : IdentityUser<int>
     public ICollection<Company> Companies { get; set; }
 
 }
+
+public static class AppUserExtensions
+{
+    
+    public static AppUserDTO ToDTO(this AppUser user)
+    {
+        return new AppUserDTO
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            FullName = user.FullName,
+            Email = user.Email,
+            Companies = user.Companies
+        };
+    }
+}
