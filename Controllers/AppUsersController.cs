@@ -17,7 +17,6 @@ using Punch_API.Options;
 
 namespace Punch_API.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AppUsersController : ControllerBase
@@ -36,6 +35,7 @@ namespace Punch_API.Controllers
         }
 
         // GET: api/AppUsers
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetAppUsers()
         {
@@ -63,6 +63,7 @@ namespace Punch_API.Controllers
         }
 
         // GET: api/AppUsers/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetAppUser(int id)
         {
@@ -76,6 +77,7 @@ namespace Punch_API.Controllers
             return appUser;
         }
 
+        [Authorize]
         [HttpGet]
         [Route("get-current-user")]
         public async Task<IActionResult> GetCurrentUser()
@@ -93,6 +95,7 @@ namespace Punch_API.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet]
         [Route("is-authenticated")]
         public async Task<IActionResult> IsLoggedIn()
@@ -173,6 +176,7 @@ namespace Punch_API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         [Route("add-user")]
         public async Task<ActionResult<AppUser>> AddUser([FromBody] AppUsersSignUpDTO appUser)
         {
