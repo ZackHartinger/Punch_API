@@ -1,13 +1,16 @@
 
+using Azure;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Punch_API.Models.Users;
-using Punch_API.Models;
-using Scalar.AspNetCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using System.Configuration;
-using Punch_API.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using Punch_API.Models;
+using Punch_API.Models.Users;
+using Punch_API.Options;
+using Scalar.AspNetCore;
+using System.Configuration;
 
 namespace Punch_API
 {
@@ -31,18 +34,23 @@ namespace Punch_API
             }
             else
             {
-                connection = Environment.GetEnvironmentVariable("PunchDbContext");
+                connection = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
             }
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
 
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                    builder.WithOrigins("https://api.punch-time-management.com","https://punch-time-management.com")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowCredentials();
+                    .AllowCredentials()
+                    .WithExposedHeaders("Set-Cookie");
                 });
             });
 
@@ -85,6 +93,40 @@ namespace Punch_API
                         context.Set<AppUser>().Add(user);
                         context.SaveChanges();
                     }
+
+                    // Seed data for demo login for live project!
+                    var company = context.Set<Company>().FirstOrDefault(c => c.CompanyName == "Demo");
+                    if (company == null)
+                    {
+                        context.Set<Company>().Add(new Company { CompanyName = "Demo" });
+                        context.SaveChanges();
+                    }
+
+                    var demoRole = context.Set<IdentityRole<int>>().FirstOrDefault(r => r.Name == "demo");
+                    if (demoRole == null)
+                    {
+                        context.Set<IdentityRole<int>>().Add(new IdentityRole<int> { Name = "demo" });
+                        context.SaveChanges();
+                    }
+
+                    var demoUser = new AppUser
+                    {
+                        FirstName = builder.Configuration["DemoUserOptions:FirstName"],
+                        LastName = builder.Configuration["DemoUserOptions:LastName"],
+                        Email = builder.Configuration["DemoUserOptions:Email"],
+                        UserName = builder.Configuration["DemoUserOptions:UserName"],
+                        SecurityStamp = Guid.NewGuid().ToString("D")
+                    };
+                    var testDemoUser = context.Set<AppUser>().FirstOrDefault(u => u.Email == demoUser.Email);
+                    if (testDemoUser == null)
+                    {
+                        var hasher = new PasswordHasher<AppUser>();
+                        var hashed = hasher.HashPassword(user, builder.Configuration["DemoUserOptions:Password"]);
+                        user.PasswordHash = hashed;
+
+                        context.Set<AppUser>().Add(demoUser);
+                        context.SaveChanges();
+                    }
                 }
 
                 )
@@ -98,7 +140,6 @@ namespace Punch_API
                      }
                      var user = new AppUser
                      {
-                         Id = 1,
                          FirstName = builder.Configuration["AdminUserOptions:FirstName"],
                          LastName = builder.Configuration["AdminUserOptions:LastName"],
                          Email = builder.Configuration["AdminUserOptions:Email"]
@@ -120,13 +161,33 @@ namespace Punch_API
                 .AddEntityFrameworkStores<PunchDbContext>()
                 .AddDefaultTokenProviders();
 
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/AppUsers/log-in";
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.IsEssential = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.Extensions.Add("Partitioned");
+                options.Cookie.Domain = ".punch-time-management.com";
+            });
+
             builder.Services
                 .AddAuthentication()
-                .AddCookie(options => 
-                    options.LoginPath = "/AppUsers/log-in");
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/AppUsers/log-in";
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.IsEssential = true;
+                    options.Cookie.Extensions.Add("Partitioned");
+                    options.Cookie.Domain = ".punch-time-management.com";
+                });
 
             builder.Services.AddAuthorization();
 
+          
 
             var app = builder.Build();
 
@@ -134,14 +195,20 @@ namespace Punch_API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
-                app.MapScalarApiReference();
+                app.MapScalarApiReference(options =>
+                {
+                    options.Servers = [];
+                });
             }
 
+            
+            app.UseForwardedHeaders();
             app.UseHttpsRedirection();
 
-            app.UseCors();
+            app.UseCookiePolicy();
 
             app.UseRouting();
+            app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();

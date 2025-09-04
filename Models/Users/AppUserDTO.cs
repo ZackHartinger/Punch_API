@@ -8,7 +8,7 @@
         public string LastName { get; set; } = null!;
 
         public string FullName { get; set; } = null!;
-
+                    
         public string Email { get; set; } = null!;
         
         public ICollection<Company> Companies { get; set; } = new List<Company>();

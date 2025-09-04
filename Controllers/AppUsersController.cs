@@ -35,8 +35,8 @@ namespace Punch_API.Controllers
         }
 
         // GET: api/AppUsers
-        [HttpGet]
         [Authorize]
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetAppUsers()
         {
             var appUsers =  await _context.AppUsers
@@ -49,16 +49,9 @@ namespace Punch_API.Controllers
             foreach(AppUser appUser in appUsers)
             {
                 var roles = await _userManager.GetRolesAsync(appUser);
-                appUserDTOs.Add(new AppUserDTO
-                {
-                    Id = appUser.Id,
-                    FirstName = appUser.FirstName,
-                    LastName = appUser.LastName,
-                    FullName = appUser.FullName,
-                    Email = appUser.Email,
-                    Companies = appUser.Companies,
-                    Roles = roles
-                });
+                var appUserDTO = appUser.ToDTO();
+                appUserDTO.Roles = roles;
+                appUserDTOs.Add(appUserDTO);
             }
 
             if(appUsers == null || appUserDTOs == null)
@@ -70,6 +63,7 @@ namespace Punch_API.Controllers
         }
 
         // GET: api/AppUsers/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetAppUser(int id)
         {
@@ -83,6 +77,7 @@ namespace Punch_API.Controllers
             return appUser;
         }
 
+        [Authorize]
         [HttpGet]
         [Route("get-current-user")]
         public async Task<IActionResult> GetCurrentUser()
@@ -100,6 +95,7 @@ namespace Punch_API.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet]
         [Route("is-authenticated")]
         public async Task<IActionResult> IsLoggedIn()
@@ -180,6 +176,51 @@ namespace Punch_API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
+        [Route("add-user")]
+        public async Task<ActionResult<AppUser>> AddUser([FromBody] AppUsersSignUpDTO appUser)
+        {
+            if (ModelState.IsValid)
+            {
+                var defaultCompany = _context.Companies.FirstOrDefault(c => c.CompanyId == 1);
+                var user = new AppUser
+                {
+                    FirstName = appUser.FirstName,
+                    LastName = appUser.LastName,
+                    Email = appUser.Email,
+                    UserName = appUser.Email,
+                    Companies = [defaultCompany]
+                };
+                var testUser = _context.AppUsers.FirstOrDefault(u => u.Email == user.Email);
+                if (testUser == null)
+                {
+                    var result = await _userManager.CreateAsync(user, appUser.Password);
+                    if (result.Succeeded)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return CreatedAtAction("GetAppUser", new { id = user.Id }, appUser);
+                    }
+                    else
+                    {
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError("", error.Description);
+                        }
+                    }
+                }
+                else
+                {
+                    return BadRequest("A user with this email already exists.");
+                }
+            }
+            else
+            {
+                return BadRequest();
+            }
+            return NoContent();
+        }
+
+        [HttpPost]
         [Route("log-in")]
         public async Task<IActionResult> LogIn([FromBody] AppUserLoginDTO appUser)
         {
@@ -224,6 +265,7 @@ namespace Punch_API.Controllers
             return Ok("Log out successfull!");
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("add-to-role/{id}/{roleName}")]
         public async Task<IActionResult> AddUserToRole(int id, string roleName)
@@ -256,6 +298,7 @@ namespace Punch_API.Controllers
             }
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("remove-from-role/{id}/{roleName}")]
         public async Task<IActionResult> RemoveFromRole(int id, string roleName)
@@ -281,6 +324,7 @@ namespace Punch_API.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("invite-new-user/{email}")]
         public async Task<IActionResult> InviteNewUser(string email)
@@ -324,6 +368,7 @@ namespace Punch_API.Controllers
         }
 
         // DELETE: api/AppUsers/5
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppUser(int id)
         {

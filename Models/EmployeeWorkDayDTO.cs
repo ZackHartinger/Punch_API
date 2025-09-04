@@ -1,4 +1,5 @@
 ﻿using Punch_API.Models;
+using Punch_API.Models.Users;
 
 namespace OBD_API.Models
 {
@@ -26,6 +27,12 @@ namespace OBD_API.Models
 
         public int UserId { get; set; }
 
+        public AppUserDTO User { get; set; }
+
+        public int CompanyId { get; set; }
+
         public ICollection<WorkTaskDTO> WorkDayTasks { get; set; } 
     }
+
+    
 }
